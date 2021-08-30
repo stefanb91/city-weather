@@ -5,6 +5,7 @@ plugins {
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     kotlin("jvm") version "1.5.21"
     kotlin("plugin.spring") version "1.5.21"
+    kotlin("kapt") version "1.5.21"
 }
 
 group = "com.city.weather"
@@ -31,20 +32,49 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-    compileOnly("org.projectlombok:lombok")
+
+    // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-ui
+    implementation("org.springdoc:springdoc-openapi-ui:1.5.2")
+
+    implementation("mysql:mysql-connector-java:8.0.15")
+
+    // https://mvnrepository.com/artifact/org.mapstruct/mapstruct
+    implementation("org.mapstruct:mapstruct:1.4.2.Final")
+
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    implementation("org.apache.commons:commons-lang3:3.12.0")
+
+    // https://mvnrepository.com/artifact/org.simpleflatmapper/sfm-jdbc
+    implementation("org.simpleflatmapper:sfm-springjdbc:8.2.3")
+    // https://mvnrepository.com/artifact/com.google.guava/guava
+    implementation("com.google.guava:guava:r05")
+
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-    annotationProcessor("org.projectlombok:lombok")
+
+    kapt("org.mapstruct:mapstruct-processor:1.4.2.Final")
+
+
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.4.2.Final")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
 }
 
+//kapt {
+//    arguments {
+//        // Set Mapstruct Configuration options here
+//        // https://kotlinlang.org/docs/reference/kapt.html#annotation-processor-arguments
+//        // https://mapstruct.org/documentation/stable/reference/html/#configuration-options
+////        arg("mapstruct.defaultComponentModel", "spring")
+//    }
+//}
+
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict")
+        freeCompilerArgs = listOf("-Xjsr305=strict", "-Xjvm-default=all")
         jvmTarget = "16"
     }
 }
 
-tasks.withType<Test> {
+ tasks.withType<Test> {
     useJUnitPlatform()
 }
