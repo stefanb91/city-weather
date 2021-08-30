@@ -6,6 +6,7 @@ import com.city.weather.city.model.Weather
 import com.city.weather.city.repository.CityWeatherRepository
 import com.city.weather.city.response.CityAvgTempDto
 import com.city.weather.city.response.weatherapi.WeatherMapDto
+import com.city.weather.city.utils.CityWeatherMySqlContainer
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -13,8 +14,11 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.mapstruct.factory.Mappers
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.jdbc.Sql
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
 import java.io.File
 import java.io.IOException
 import java.math.BigDecimal
@@ -22,8 +26,15 @@ import java.util.*
 import java.util.function.Consumer
 
 @SpringBootTest
-@ActiveProfiles("test")
+@Testcontainers
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 internal class CityWeatherDaoTest {
+
+    @Container
+    val mySqlContainer = CityWeatherMySqlContainer(image = "mysql:8.0")
+        .withDatabaseName("city_weather_test_container")
+        .withUsername("testuser")
+        .withPassword("pass");
 
     @Autowired
     lateinit var repository: CityWeatherRepository
@@ -36,11 +47,13 @@ internal class CityWeatherDaoTest {
 
     // TODO: use test containers
     @Test
+    @Sql(scripts = ["classpath:schema.sql", "classpath:data.sql"])
     @Throws(IOException::class)
     fun saveWeathersAndFindAllByCityId() {
         mapper.configure(
             DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-            false)
+            false
+        )
         val jsonFile: File = File(RESOURCE_PATH)
         if (jsonFile.exists()) {
             val responseDto: WeatherMapDto =
@@ -63,6 +76,7 @@ internal class CityWeatherDaoTest {
     }
 
     @Test
+    @Sql(scripts = ["classpath:schema.sql", "classpath:data_all.sql"])
     fun findCitiesAvgTemp() {
         val cities: MutableList<Long> = ArrayList()
         cities.add(2643743L)
@@ -82,22 +96,25 @@ internal class CityWeatherDaoTest {
     }
 
     @Test
+    @Sql(scripts = ["classpath:schema.sql", "classpath:data_all.sql"])
     fun findAllCities() {
         val cities = repository.findAllCities()
         Assertions.assertFalse(cities!!.isEmpty())
         Assertions.assertTrue(cities.size == 3)
-        Assertions.assertTrue(cities.get(0).weathers.size == 40)
+        Assertions.assertTrue(cities.get(BigDecimal.ZERO.toInt()).weathers.size > BigDecimal.ZERO.toInt())
     }
 
     @Test
+    @Sql(scripts = ["classpath:schema.sql", "classpath:data_all.sql"])
     fun findCityById() {
         val cityOpt: Optional<City> = repository.findCityById(524901L)
         Assertions.assertTrue(cityOpt.isPresent)
         Assertions.assertTrue(cityOpt.get().cityName.equals("Moscow"))
-        Assertions.assertTrue(cityOpt.get().weathers.size === 40)
+        Assertions.assertTrue(cityOpt.get().weathers.size > BigDecimal.ZERO.toInt())
     }
 
     @Test
+    @Sql(scripts = ["classpath:schema.sql", "classpath:data_all.sql"])
     fun findCityAvgTemp() {
         val cityAvgTempOpt: Optional<CityAvgTempDto> = repository.findCityAvgTemp(524901L)
         Assertions.assertTrue(cityAvgTempOpt.isPresent)
